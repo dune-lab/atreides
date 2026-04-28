@@ -139,6 +139,35 @@ describe('POST /users/confirm-email', () => {
   });
 });
 
+describe('POST /users/authenticate', () => {
+  it('returns 200 with id, email, role (no passwordHash) for valid credentials', async () => {
+    await inject({ method: 'POST', url: '/users', body: validBody });
+
+    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: 'alice@example.com', password: 'secret123' } });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.id).toBeDefined();
+    expect(body.email).toBe('alice@example.com');
+    expect(body.role).toBe('student');
+    expect(body.passwordHash).toBeUndefined();
+  });
+
+  it('returns 401 for wrong password', async () => {
+    await inject({ method: 'POST', url: '/users', body: validBody });
+
+    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: 'alice@example.com', password: 'wrongpassword' } });
+
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('returns 401 for non-existent email', async () => {
+    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: 'ghost@example.com', password: 'secret123' } });
+
+    expect(res.statusCode).toBe(401);
+  });
+});
+
 describe('GET /users', () => {
   it('returns empty array when no users', async () => {
     const res = await inject({ method: 'GET', url: '/users' });

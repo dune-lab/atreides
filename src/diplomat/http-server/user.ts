@@ -1,9 +1,9 @@
 import { fn } from '@enxoval/types';
-import { post } from '@enxoval/http';
-import { CreateUserWireIn, ConfirmEmailWireIn } from '../../wire/in/user';
+import { post, postOk } from '@enxoval/http';
+import { CreateUserWireIn, ConfirmEmailWireIn, AuthenticateWireIn } from '../../wire/in/user';
 import { UserWireOut } from '../../wire/out/user';
 import { User } from '../../model/user';
-import { createUser, confirmEmail } from '../../controllers/user';
+import { createUser, confirmEmail, authenticateUser } from '../../controllers/user';
 
 const toWireOut = fn(User, UserWireOut, (u) => ({
   id: u.id,
@@ -24,6 +24,12 @@ export function registerUserRoutes(): void {
   post('/users/confirm-email', async (body) => {
     const input = ConfirmEmailWireIn.parse(body);
     const user = await confirmEmail(input);
+    return toWireOut(user);
+  });
+
+  postOk('/users/authenticate', async (body) => {
+    const input = AuthenticateWireIn.parse(body);
+    const user = await authenticateUser(input);
     return toWireOut(user);
   });
 }

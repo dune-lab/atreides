@@ -11,3 +11,8 @@ export const CreateUserWireIn = createSchema({
 export const ConfirmEmailWireIn = createSchema({
   id: field.uuid(),
 });
+
+export const AuthenticateWireIn = createSchema({
+  email: field.string(),
+  password: field.string(),
+});

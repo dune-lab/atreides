@@ -17,11 +17,12 @@
     "integration": "vitest run --config node_modules/@enxoval/testing/dist/vitest.config.js --project integration"
   },
   "dependencies": {
+    "@enxoval/auth": "file:../enxoval/auth",
     "@enxoval/db": "^1.0.3",
-    "@enxoval/http": "^1.0.1",
+    "@enxoval/http": "file:../enxoval/http",
     "@enxoval/messaging": "^1.0.1",
     "@enxoval/observability": "^1.0.1",
-    "@enxoval/types": "^1.0.3"
+    "@enxoval/types": "file:../enxoval/types"
   },
   "devDependencies": {
     "@enxoval/quality": "^1.0.1",
