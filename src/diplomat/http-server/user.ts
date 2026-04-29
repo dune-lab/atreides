@@ -1,9 +1,10 @@
-import { fn } from '@enxoval/types';
-import { post, postOk } from '@enxoval/http';
+import { fn, NotFoundError } from '@enxoval/types';
+import { post, postOk, getWith } from '@enxoval/http';
 import { CreateUserWireIn, ConfirmEmailWireIn, AuthenticateWireIn } from '../../wire/in/user';
 import { UserWireOut } from '../../wire/out/user';
 import { User } from '../../model/user';
 import { createUser, confirmEmail, authenticateUser } from '../../controllers/user';
+import * as userDb from '../../db/user';
 
 const toWireOut = fn(User, UserWireOut, (u) => ({
   id: u.id,
@@ -30,6 +31,12 @@ export function registerUserRoutes(): void {
   postOk('/users/authenticate', async (body) => {
     const input = AuthenticateWireIn.parse(body);
     const user = await authenticateUser(input);
+    return toWireOut(user);
+  });
+
+  getWith<{ id: string }>('/users/:id', async ({ id }) => {
+    const user = await userDb.findById(id);
+    if (!user) throw new NotFoundError(`User ${id} not found`);
     return toWireOut(user);
   });
 }

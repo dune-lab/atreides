@@ -1,8 +1,10 @@
-import { Migration, sql } from '@enxoval/db';
+import { Migration, MigrationRunner, sql } from '@enxoval/db';
 
-export class CreateUsers001 implements Migration {
-  async up(): Promise<void> {
-    await sql(`
+export class CreateUsers001 extends Migration {
+  name = '001-create-users';
+
+  async up(runner: MigrationRunner): Promise<void> {
+    await sql(runner, `
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name VARCHAR NOT NULL,
@@ -15,7 +17,7 @@ export class CreateUsers001 implements Migration {
     `);
   }
 
-  async down(): Promise<void> {
-    await sql(`DROP TABLE IF EXISTS users`);
+  async down(runner: MigrationRunner): Promise<void> {
+    await sql(runner, `DROP TABLE IF EXISTS users`);
   }
 }
