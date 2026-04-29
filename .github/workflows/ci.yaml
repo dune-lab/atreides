@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout service
+        uses: actions/checkout@v4
+        with:
+          path: service
+
+      - name: Checkout enxoval
+        uses: actions/checkout@v4
+        with:
+          repository: orezende/enxoval
+          path: enxoval
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build enxoval packages
+        run: |
+          (cd enxoval/types && npm install && npm run build)
+          (cd enxoval/http && npm install && npm run build)
+          (cd enxoval/auth && npm install && npm run build)
+          (cd enxoval/messaging && npm install && npm run build)
+
+      - name: Install dependencies
+        working-directory: service
+        run: npm install
+
+      - name: Build
+        working-directory: service
+        run: npm run build
+
+      - name: Test
+        working-directory: service
+        run: npm test
