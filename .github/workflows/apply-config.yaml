@@ -1,0 +1,54 @@
+name: Apply Config Override
+
+on:
+  push:
+    branches:
+      - config
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge and apply config
+        run: |
+          cat > merge.mjs << 'SCRIPT'
+          import { execSync } from 'node:child_process';
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          function deepMerge(base, override) {
+            const result = { ...base };
+            for (const key of Object.keys(override)) {
+              const isObj = v => typeof v === 'object' && v !== null && !Array.isArray(v);
+              result[key] = isObj(override[key]) && isObj(base[key])
+                ? deepMerge(base[key], override[key])
+                : override[key];
+            }
+            return result;
+          }
+
+          const service = process.env.GITHUB_REPOSITORY.split('/')[1];
+          const override = JSON.parse(readFileSync(`${service}.json`, 'utf-8'));
+          const base = JSON.parse(execSync('git show main:config.json').toString());
+          const merged = deepMerge(base, override);
+
+          execSync('git checkout main');
+          writeFileSync('config.json', JSON.stringify(merged, null, 2) + '\n');
+          SCRIPT
+          node merge.mjs
+
+      - name: Commit merged config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config.json
+          git diff --staged --quiet || {
+            git commit -m "chore: apply config override from config branch"
+            git push origin main
+          }
