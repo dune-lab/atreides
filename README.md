@@ -1,6 +1,8 @@
 # atreides
 
-User identity service. Manages user creation and email confirmation.
+User identity service. Manages user creation, email confirmation, and credential validation.
+
+Named after House Atreides from Dune — the noble house that holds the truth.
 
 ## Stack
 
@@ -8,6 +10,7 @@ User identity service. Manages user creation and email confirmation.
 - Fastify (via `@enxoval/http`)
 - PostgreSQL + TypeORM (via `@enxoval/db`)
 - Kafka (via `@enxoval/messaging`)
+- JWT auth middleware (via `@enxoval/auth`)
 
 ## How to Run
 
@@ -18,23 +21,28 @@ npm run migration:run
 npm run dev
 ```
 
-Or with Docker:
+Or with Docker (from `platform/`):
 
 ```bash
-docker-compose up
+docker-compose up atreides
 ```
+
+Default port: **3002**
 
 ## Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | API reference |
-| `POST` | `/users` | Create a new user |
-| `POST` | `/users/confirm-email` | Confirm user email |
-| `GET` | `/users` | List all users |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/health` | — | Health check |
+| `GET` | `/docs` | — | API reference |
+| `POST` | `/users` | — | Create a new user |
+| `POST` | `/users/confirm-email` | — | Confirm user email |
+| `POST` | `/users/authenticate` | — | Validate credentials (used by janus) |
+| `GET` | `/users/:id` | Bearer JWT | Get user by ID |
 
-## POST /users
+## Examples
+
+### POST /users
 
 ```bash
 curl -X POST http://localhost:3002/users \
@@ -42,7 +50,7 @@ curl -X POST http://localhost:3002/users \
   -d '{ "name": "Paul Atreides", "email": "paul@arrakis.dune", "password": "spice123", "role": "student" }'
 ```
 
-## POST /users/confirm-email
+### POST /users/confirm-email
 
 ```bash
 curl -X POST http://localhost:3002/users/confirm-email \
@@ -50,20 +58,41 @@ curl -X POST http://localhost:3002/users/confirm-email \
   -d '{ "id": "uuid-here" }'
 ```
 
-## Events
+### GET /users/:id
+
+```bash
+curl http://localhost:3002/users/uuid-here \
+  -H 'Authorization: Bearer <token>'
+```
+
+## Events Published
 
 | Topic | Trigger | Payload |
 |-------|---------|---------|
 | `userCreated` | `POST /users` | `{ userId, email, role }` |
 | `mailConfirmed` | `POST /users/confirm-email` | `{ userId, email }` |
 
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PORT` | HTTP port (default: `3002`) |
+| `HOST` | Bind address (default: `0.0.0.0`) |
+| `DB_HOST` | Postgres host |
+| `DB_PORT` | Postgres port |
+| `DB_USER` | Postgres user |
+| `DB_PASSWORD` | Postgres password |
+| `DB_NAME` | Postgres database name |
+| `KAFKA_BROKER` | Kafka broker address |
+| `JWT_SECRET` | Secret used to validate incoming tokens |
+
 ## Scripts
 
 ```bash
-npm run dev          # dev server with hot reload
-npm run build        # compile TypeScript
-npm test             # run all tests
-npm run lint         # check formatting and lint
+npm run dev                # dev server with hot reload
+npm run build              # compile TypeScript
+npm test                   # run all tests
+npm run lint               # check formatting and lint
 npm run migration:run      # apply migrations
 npm run migration:revert   # revert last migration
 ```
