@@ -7,24 +7,82 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  build:
+    name: Build
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
+          cache: npm
       - run: npm ci
-
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
-      - run: npm test
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run unit --if-present
 
-      - name: Publish contracts to registry
-        if: github.event_name == 'push'
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run integration --if-present
+
+  kanly:
+    name: Contract Validation
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Clone contracts registry
+        run: git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
+      - name: Validate contracts
+        run: node node_modules/@enxoval/http/dist/cli/kanly.js
+        env:
+          KANLY_LOCAL_DIR: /tmp/contracts
+
+  publish-contracts:
+    name: Publish Contracts
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to registry
         run: |
           [ -f dist/contracts.json ] || exit 0
           git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
@@ -37,11 +95,3 @@ jobs:
           git diff --staged --quiet && echo "No contract changes" && exit 0
           git commit -m "contracts(${{ github.event.repository.name }}): update from ${{ github.sha }}"
           git push
-
-      - name: Validate contracts
-        if: github.event_name == 'pull_request'
-        run: |
-          git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
-          node node_modules/@enxoval/http/dist/cli/kanly.js
-        env:
-          KANLY_LOCAL_DIR: /tmp/contracts
