@@ -6,7 +6,7 @@ Named after House Atreides from Dune — the noble house that holds the truth.
 
 ## Stack
 
-- Node.js 24 + TypeScript
+- Node.js 22 + TypeScript
 - Fastify (via `@enxoval/http`)
 - PostgreSQL + TypeORM (via `@enxoval/db`)
 - Kafka (via `@enxoval/messaging`)
@@ -19,12 +19,6 @@ cp .env.example .env
 npm install
 npm run migration:run
 npm run dev
-```
-
-Or with Docker (from `platform/`):
-
-```bash
-docker-compose up atreides
 ```
 
 Default port: **3002**
@@ -90,9 +84,48 @@ curl http://localhost:3002/users/uuid-here \
 
 ```bash
 npm run dev                # dev server with hot reload
-npm run build              # compile TypeScript
+npm run build              # compile TypeScript + generate contracts.json
 npm test                   # run all tests
+npm run unit               # unit tests only
+npm run integration        # integration tests only
 npm run lint               # check formatting and lint
-npm run migration:run      # apply migrations
+npm run lint-fix           # auto-fix formatting
+npm run migration:run      # apply pending migrations
 npm run migration:revert   # revert last migration
+```
+
+## CI Pipeline
+
+Every PR runs 5 checks in sequence:
+
+```
+Build
+├── Unit Tests
+├── Integration Tests
+└── Publish Contracts
+        └── Contract Validation
+```
+
+| Check | Description |
+|-------|-------------|
+| **Build** | Compiles TypeScript, generates `contracts.json` |
+| **Unit Tests** | Fast tests, no external dependencies |
+| **Integration Tests** | Tests with DB and Kafka |
+| **Publish Contracts** | Publishes `contracts.json` to [dune-lab/contracts](https://github.com/dune-lab/contracts) |
+| **Contract Validation** | Runs kanly — validates wire compatibility with all HTTP partners |
+
+## Contract Validation
+
+Wire types live in `src/wire/`. After every build, `contracts.json` is generated automatically via the `postbuild` script and published to the contract registry.
+
+To add metadata to a wire type for richer kanly logs:
+
+```ts
+static describe() {
+  return {
+    _meta: { method: 'POST', path: '/users' },
+    id: { type: 'uuid' },
+    name: { type: 'string' },
+  };
+}
 ```
