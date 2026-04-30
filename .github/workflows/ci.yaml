@@ -28,6 +28,7 @@ jobs:
         run: |
           [ -f dist/contracts.json ] || exit 0
           git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
+          mkdir -p /tmp/contracts/${{ github.event.repository.name }}
           cp dist/contracts.json /tmp/contracts/${{ github.event.repository.name }}/contracts.json
           cd /tmp/contracts
           git config user.name "github-actions[bot]"
