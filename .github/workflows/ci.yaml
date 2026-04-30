@@ -22,3 +22,19 @@ jobs:
       - run: npm run build
 
       - run: npm test
+
+      - name: Checkout partner contracts
+        run: |
+          mkdir -p partners
+          for repo in atreides odyssey persona janus imperium; do
+            [ "$repo" = "${{ github.event.repository.name }}" ] && continue
+            git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/$repo.git" "partners/$repo" 2>/dev/null || continue
+            cd "partners/$repo"
+            npm ci --ignore-scripts 2>/dev/null && npm run build 2>/dev/null || true
+            cd "$GITHUB_WORKSPACE"
+          done
+
+      - name: Validate contracts
+        run: npx kanly
+        env:
+          KANLY_LOCAL_DIR: ${{ github.workspace }}/partners
