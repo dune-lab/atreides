@@ -23,18 +23,24 @@ jobs:
 
       - run: npm test
 
-      - name: Checkout partner contracts
+      - name: Publish contracts to registry
+        if: github.event_name == 'push'
         run: |
-          mkdir -p partners
-          for repo in atreides odyssey persona janus imperium; do
-            [ "$repo" = "${{ github.event.repository.name }}" ] && continue
-            git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/$repo.git" "partners/$repo" 2>/dev/null || continue
-            cd "partners/$repo"
-            npm ci --ignore-scripts 2>/dev/null && npm run build 2>/dev/null || true
-            cd "$GITHUB_WORKSPACE"
-          done
+          [ -f dist/contracts.json ] || exit 0
+          git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
+          cp dist/contracts.json /tmp/contracts/${{ github.event.repository.name }}/contracts.json
+          cd /tmp/contracts
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet && echo "No contract changes" && exit 0
+          git commit -m "contracts(${{ github.event.repository.name }}): update from ${{ github.sha }}"
+          git push
 
       - name: Validate contracts
-        run: npx kanly
+        if: github.event_name == 'pull_request'
+        run: |
+          git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
+          node node_modules/@enxoval/http/dist/cli/kanly.js
         env:
-          KANLY_LOCAL_DIR: ${{ github.workspace }}/partners
+          KANLY_LOCAL_DIR: /tmp/contracts
