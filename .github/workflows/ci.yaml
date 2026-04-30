@@ -11,37 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout service
-        uses: actions/checkout@v4
-        with:
-          path: service
+      - uses: actions/checkout@v4
 
-      - name: Checkout enxoval
-        uses: actions/checkout@v4
-        with:
-          repository: orezende/enxoval
-          path: enxoval
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Build enxoval packages
-        run: |
-          (cd enxoval/types && npm install && npm run build)
-          (cd enxoval/http && npm install && npm run build)
-          (cd enxoval/auth && npm install && npm run build)
-          (cd enxoval/messaging && npm install && npm run build)
+      - run: npm ci
 
-      - name: Install dependencies
-        working-directory: service
-        run: npm install
+      - run: npm run build
 
-      - name: Build
-        working-directory: service
-        run: npm run build
-
-      - name: Test
-        working-directory: service
-        run: npm test
+      - run: npm test
