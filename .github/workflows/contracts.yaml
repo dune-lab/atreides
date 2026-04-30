@@ -1,0 +1,31 @@
+name: Contracts
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    name: Publish Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Publish to registry
+        run: |
+          [ -f dist/contracts.json ] || exit 0
+          git clone "https://x-access-token:${{ secrets.DUNE_LAB_TOKEN }}@github.com/dune-lab/contracts.git" /tmp/contracts
+          mkdir -p /tmp/contracts/${{ github.event.repository.name }}
+          cp dist/contracts.json /tmp/contracts/${{ github.event.repository.name }}/contracts.json
+          cd /tmp/contracts
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet && echo "No contract changes" && exit 0
+          git commit -m "contracts(${{ github.event.repository.name }}): update from ${{ github.sha }}"
+          git push
