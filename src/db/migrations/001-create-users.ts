@@ -1,7 +1,7 @@
 import { Migration, MigrationRunner, sql } from '@enxoval/db';
 
-export class CreateUsers001 extends Migration {
-  name = '001-create-users';
+export class CreateUsers1700000000001 extends Migration {
+  name = 'CreateUsers1700000000001';
 
   async up(runner: MigrationRunner): Promise<void> {
     await sql(runner, `
