@@ -18,9 +18,9 @@
     "postbuild": "node node_modules/@enxoval/http/dist/cli/generate-contracts.js"
   },
   "dependencies": {
-    "@enxoval/auth": "^1.0.1",
+    "@enxoval/auth": "^1.0.2",
     "@enxoval/db": "^1.0.3",
-    "@enxoval/http": "^1.0.12",
+    "@enxoval/http": "^1.0.20",
     "@enxoval/messaging": "^1.0.2",
     "@enxoval/observability": "^1.0.1",
     "@enxoval/types": "^1.0.6"
