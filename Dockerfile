@@ -2,12 +2,13 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY atreides/package.json ./package.json
+COPY atreides/package-lock.json ./package-lock.json
 RUN npm ci
 
-COPY src ./src
-COPY tsconfig.json ./
-COPY student-journey.json ./
+COPY atreides/src ./src
+COPY atreides/tsconfig.json ./tsconfig.json
+COPY atreides/student-journey.json ./student-journey.json
 
 RUN npx tsc
 
