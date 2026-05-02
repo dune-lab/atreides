@@ -1,0 +1,6 @@
+{
+  "kafka_topics": {
+    "userCreated":    { "topic": "user-created" },
+    "mailConfirmed":  { "topic": "mail-confirmed" }
+  }
+}
