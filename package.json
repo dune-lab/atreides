@@ -20,9 +20,9 @@
   "dependencies": {
     "@enxoval/auth": "^1.0.2",
     "@enxoval/db": "^1.0.3",
-    "@enxoval/http": "^1.0.20",
+    "@enxoval/http": "^1.0.21",
     "@enxoval/messaging": "^1.0.2",
-    "@enxoval/observability": "^1.0.1",
+    "@enxoval/observability": "^1.0.2",
     "@enxoval/types": "^1.0.24"
   },
   "devDependencies": {
