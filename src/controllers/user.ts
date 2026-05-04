@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { asyncFn, UnauthorizedError } from '@enxoval/types';
+import { asyncFn, ConflictError, UnauthorizedError } from '@enxoval/types';
 import { publish } from '@enxoval/messaging';
 import { User } from '../model/user';
 import { CreateUserWireIn, ConfirmEmailWireIn, AuthenticateWireIn } from '../wire/in/user';
@@ -8,7 +8,7 @@ import * as userDb from '../db/user';
 
 export const createUser = asyncFn(CreateUserWireIn, User, async (input) => {
   const existing = await userDb.findByEmail(input.email);
-  if (existing) return existing;
+  if (existing) throw new ConflictError('E-mail já está em uso');
 
   const passwordHash = createHash('sha256').update(input.password).digest('hex');
   const user = await userDb.insert(buildUser({ name: input.name, email: input.email, passwordHash, role: input.role }));
