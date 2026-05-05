@@ -145,3 +145,9 @@ npm run lint-fix         # auto-fix
 npm run migration:run    # apply pending migrations
 npm run migration:revert # revert last migration
 ```
+
+---
+
+## Dependency Updates
+
+`@enxoval/*` dependencies are bumped automatically. When a new version is published from [dune-lab/enxoval](https://github.com/dune-lab/enxoval), a GitHub Actions workflow opens a PR in this repo updating `package.json` and `package-lock.json`. No manual version bumping required.
