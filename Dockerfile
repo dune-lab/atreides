@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY atreides/package.json ./package.json
 COPY atreides/package-lock.json ./package-lock.json
-RUN npm ci
+RUN npm install
 
 COPY atreides/src ./src
 COPY atreides/tsconfig.json ./tsconfig.json
