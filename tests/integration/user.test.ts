@@ -61,11 +61,11 @@ describe('POST /users', () => {
     expect(users[0].password_hash).not.toBe(validBody.password);
   });
 
-  it('is idempotent — second call with same email returns existing user', async () => {
-    const res1 = await inject({ method: 'POST', url: '/users', body: validBody });
+  it('returns 409 on duplicate email', async () => {
+    await inject({ method: 'POST', url: '/users', body: validBody });
     const res2 = await inject({ method: 'POST', url: '/users', body: validBody });
 
-    expect(res1.json().id).toBe(res2.json().id);
+    expect(res2.statusCode).toBe(409);
     const users = await AppDataSource.getRepository(UserDbWire).find();
     expect(users).toHaveLength(1);
   });
