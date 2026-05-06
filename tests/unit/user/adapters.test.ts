@@ -1,54 +1,63 @@
-import { describe, it, expect } from '@enxoval/testing';
+/**
+ * tests/unit/user/adapters.test.ts
+ *
+ * Unit tests for the user adapter functions (fromDbWire and toDbWire).
+ * Uses generate() for random field values (fromDbWire) and itCases() for
+ * property-based invariant checks over many random UserInput values (toDbWire).
+ */
+
+import { describe, it, itCases, generate, expect } from '@enxoval/testing';
 import { fromDbWire, toDbWire } from '../../../src/adapters/user';
 import { UserDbWire } from '../../../src/db/wire/user';
-
-const userId = '11111111-1111-1111-1111-111111111111';
+import { User, UserInput } from '../../../src/model/user';
 
 describe('user adapter — fromDbWire', () => {
   it('maps snake_case db columns to camelCase model', () => {
-    const wire = new UserDbWire();
-    wire.id = userId;
-    wire.name = 'Alice';
-    wire.email = 'alice@example.com';
-    wire.password_hash = 'abc123';
-    wire.email_verified = false;
-    wire.role = 'student';
-    wire.created_at = new Date('2024-01-01');
+    const generated = generate(User);
 
-    expect(fromDbWire(wire)).toEqual({
-      id: userId,
-      name: 'Alice',
-      email: 'alice@example.com',
-      passwordHash: 'abc123',
-      emailVerified: false,
-      role: 'student',
-      createdAt: new Date('2024-01-01'),
-    });
+    const wire = new UserDbWire();
+    wire.id = generated.id;
+    wire.name = generated.name;
+    wire.email = generated.email;
+    wire.password_hash = generated.passwordHash;
+    wire.email_verified = generated.emailVerified;
+    wire.role = generated.role;
+    wire.created_at = new Date();
+
+    const result = fromDbWire(wire);
+
+    expect(result.id).toBe(wire.id);
+    expect(result.name).toBe(wire.name);
+    expect(result.email).toBe(wire.email);
+    expect(result.passwordHash).toBe(wire.password_hash);
+    expect(result.emailVerified).toBe(wire.email_verified);
+    expect(result.role).toBe(wire.role);
+    expect(result.createdAt).toBeInstanceOf(Date);
   });
 });
 
 describe('user adapter — toDbWire', () => {
-  it('returns a UserDbWire instance', () => {
-    const result = toDbWire({ name: 'Alice', email: 'alice@example.com', passwordHash: 'abc123', emailVerified: false, role: 'student' });
+  itCases('returns a UserDbWire instance', UserInput, (input) => {
+    const result = toDbWire(input);
     expect(result).toBeInstanceOf(UserDbWire);
   });
 
-  it('maps fields correctly', () => {
-    const result = toDbWire({ name: 'Alice', email: 'alice@example.com', passwordHash: 'abc123', emailVerified: false, role: 'teacher' });
-    expect(result.name).toBe('Alice');
-    expect(result.email).toBe('alice@example.com');
-    expect(result.password_hash).toBe('abc123');
-    expect(result.email_verified).toBe(false);
-    expect(result.role).toBe('teacher');
+  itCases('maps all fields correctly', UserInput, (input) => {
+    const result = toDbWire(input);
+    expect(result.name).toBe(input.name);
+    expect(result.email).toBe(input.email);
+    expect(result.password_hash).toBe(input.passwordHash);
+    expect(result.email_verified).toBe(input.emailVerified);
+    expect(result.role).toBe(input.role);
   });
 
-  it('does not set id (delegated to DB)', () => {
-    const result = toDbWire({ name: 'Alice', email: 'alice@example.com', passwordHash: 'abc123', emailVerified: false, role: 'student' });
+  itCases('does not set id (delegated to DB)', UserInput, (input) => {
+    const result = toDbWire(input);
     expect(result.id).toBeUndefined();
   });
 
-  it('does not set created_at (delegated to DB)', () => {
-    const result = toDbWire({ name: 'Alice', email: 'alice@example.com', passwordHash: 'abc123', emailVerified: false, role: 'student' });
+  itCases('does not set created_at (delegated to DB)', UserInput, (input) => {
+    const result = toDbWire(input);
     expect(result.created_at).toBeUndefined();
   });
 });

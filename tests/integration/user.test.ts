@@ -1,4 +1,4 @@
-import { test, describe, it, expect, beforeAll, beforeEach, afterAll, afterEach } from '@enxoval/testing';
+import { test, describe, it, expect, beforeAll, beforeEach, afterAll, afterEach, generate } from '@enxoval/testing';
 import { TestDataSource } from './helpers/data-source';
 
 test.mock('../../src/db/data-source', () => ({ AppDataSource: TestDataSource }));
@@ -13,8 +13,9 @@ import { inject } from '@enxoval/http';
 import { publish } from '@enxoval/messaging';
 import { AppDataSource } from '../../src/db/data-source';
 import { UserDbWire } from '../../src/db/wire/user';
+import { CreateUserWireIn } from '../../src/wire/in/user';
 
-const validBody = { name: 'Alice', email: 'alice@example.com', password: 'secret123', role: 'student' };
+const validBody = generate(CreateUserWireIn);
 
 beforeAll(async () => {
   await TestDataSource.initialize();
@@ -40,10 +41,10 @@ describe('POST /users', () => {
     expect(res.statusCode).toBe(201);
     const body = res.json();
     expect(body.id).toBeDefined();
-    expect(body.name).toBe('Alice');
-    expect(body.email).toBe('alice@example.com');
+    expect(body.name).toBe(validBody.name);
+    expect(body.email).toBe(validBody.email);
     expect(body.emailVerified).toBe(false);
-    expect(body.role).toBe('student');
+    expect(body.role).toBe(validBody.role);
     expect(body.createdAt).toBeDefined();
     expect(body.passwordHash).toBeUndefined();
   });
@@ -53,11 +54,11 @@ describe('POST /users', () => {
 
     const users = await AppDataSource.getRepository(UserDbWire).find();
     expect(users).toHaveLength(1);
-    expect(users[0].name).toBe('Alice');
-    expect(users[0].email).toBe('alice@example.com');
+    expect(users[0].name).toBe(validBody.name);
+    expect(users[0].email).toBe(validBody.email);
     expect(users[0].email_verified).toBe(false);
-    expect(users[0].role).toBe('student');
-    expect(users[0].password_hash).not.toBe('secret123');
+    expect(users[0].role).toBe(validBody.role);
+    expect(users[0].password_hash).not.toBe(validBody.password);
   });
 
   it('is idempotent — second call with same email returns existing user', async () => {
@@ -76,8 +77,8 @@ describe('POST /users', () => {
     const [topic, payload] = (publish as ReturnType<typeof test.fn>).mock.calls[0];
     expect(topic).toBe('userCreated');
     expect(payload.userId).toBeDefined();
-    expect(payload.email).toBe('alice@example.com');
-    expect(payload.role).toBe('student');
+    expect(payload.email).toBe(validBody.email);
+    expect(payload.role).toBe(validBody.role);
   });
 
   it('does not publish on duplicate email', async () => {
@@ -130,7 +131,7 @@ describe('POST /users/confirm-email', () => {
     const [topic, payload] = (publish as ReturnType<typeof test.fn>).mock.calls[0];
     expect(topic).toBe('mailConfirmed');
     expect(payload.userId).toBe(id);
-    expect(payload.email).toBe('alice@example.com');
+    expect(payload.email).toBe(validBody.email);
   });
 
   it('returns 400 on missing id', async () => {
@@ -143,20 +144,20 @@ describe('POST /users/authenticate', () => {
   it('returns 200 with id, email, role (no passwordHash) for valid credentials', async () => {
     await inject({ method: 'POST', url: '/users', body: validBody });
 
-    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: 'alice@example.com', password: 'secret123' } });
+    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: validBody.email, password: validBody.password } });
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.id).toBeDefined();
-    expect(body.email).toBe('alice@example.com');
-    expect(body.role).toBe('student');
+    expect(body.email).toBe(validBody.email);
+    expect(body.role).toBe(validBody.role);
     expect(body.passwordHash).toBeUndefined();
   });
 
   it('returns 401 for wrong password', async () => {
     await inject({ method: 'POST', url: '/users', body: validBody });
 
-    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: 'alice@example.com', password: 'wrongpassword' } });
+    const res = await inject({ method: 'POST', url: '/users/authenticate', body: { email: validBody.email, password: 'wrongpassword' } });
 
     expect(res.statusCode).toBe(401);
   });
@@ -176,8 +177,9 @@ describe('GET /users', () => {
   });
 
   it('returns list of users after insertion', async () => {
+    const secondUser = generate(CreateUserWireIn);
     await inject({ method: 'POST', url: '/users', body: validBody });
-    await inject({ method: 'POST', url: '/users', body: { name: 'Bob', email: 'bob@example.com', password: 'pass', role: 'teacher' } });
+    await inject({ method: 'POST', url: '/users', body: secondUser });
 
     const res = await inject({ method: 'GET', url: '/users' });
     expect(res.statusCode).toBe(200);
