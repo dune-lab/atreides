@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@enxoval/quality": "^1.0.1",
-    "@enxoval/testing": "^1.0.3",
+    "@enxoval/testing": "^1.0.4",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.0.0",
     "better-sqlite3": "^12.9.0",
