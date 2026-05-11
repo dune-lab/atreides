@@ -20,7 +20,7 @@
   "dependencies": {
     "@enxoval/auth": "^1.0.3",
     "@enxoval/db": "^1.0.3",
-    "@enxoval/http": "^1.0.28",
+    "@enxoval/http": "^1.0.29",
     "@enxoval/messaging": "^1.0.5",
     "@enxoval/observability": "^1.0.2",
     "@enxoval/types": "^1.0.25"
